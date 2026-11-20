@@ -21,7 +21,11 @@ set -euo pipefail
 PROFILE="${1:?Usage: $0 <mobileprovision> [signing-identity]}"
 IDENTITY="${2:-}"
 
-BUILD_DIR="$HOME/.maestro/maestro-iphoneos-driver-build/driver-iphoneos/Build/Products/Debug-iphoneos"
+# MAESTRO_HOME: where the driver build is extracted and the zip is written
+# (default ~/.maestro). publish-resigned-drivers.sh points it at a scratch dir.
+MAESTRO_HOME="${MAESTRO_HOME:-$HOME/.maestro}"
+
+BUILD_DIR="$MAESTRO_HOME/maestro-iphoneos-driver-build/driver-iphoneos/Build/Products/Debug-iphoneos"
 RUNNER_APP="$BUILD_DIR/maestro-driver-iosUITests-Runner.app"
 HELPER_APP="$BUILD_DIR/maestro-driver-ios.app"
 
@@ -31,9 +35,9 @@ HELPER_APP="$BUILD_DIR/maestro-driver-ios.app"
 # name the output zip accordingly; the bootstrap downloads the matching one per device.
 DRIVER_VARIANT="${DRIVER_VARIANT:-}"
 if [ -n "$DRIVER_VARIANT" ]; then
-    ZIP_OUTPUT="$HOME/.maestro/maestro-iphoneos-driver-build-${DRIVER_VARIANT}.zip"
+    ZIP_OUTPUT="$MAESTRO_HOME/maestro-iphoneos-driver-build-${DRIVER_VARIANT}.zip"
 else
-    ZIP_OUTPUT="$HOME/.maestro/maestro-iphoneos-driver-build.zip"
+    ZIP_OUTPUT="$MAESTRO_HOME/maestro-iphoneos-driver-build.zip"
 fi
 
 # --- Validate inputs ---
@@ -45,7 +49,7 @@ fi
 
 if [ ! -d "$RUNNER_APP" ]; then
     echo "Error: Runner app not found: $RUNNER_APP"
-    echo "Make sure the driver build is extracted to ~/.maestro/maestro-iphoneos-driver-build/"
+    echo "Make sure the driver build is extracted to $MAESTRO_HOME/maestro-iphoneos-driver-build/"
     exit 1
 fi
 
@@ -145,7 +149,7 @@ resign_app "$HELPER_APP"
 
 echo ""
 echo "Creating zip..."
-cd "$HOME/.maestro"
+cd "$MAESTRO_HOME"
 # Remove any existing archive first: `zip -r` is additive and would otherwise
 # retain stale entries whose source files no longer exist on disk (e.g. an old
 # iphoneosNN.N xctestrun from a previous SDK), which the CLI may then pick.
